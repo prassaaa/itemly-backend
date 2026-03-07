@@ -1,24 +1,23 @@
 package http
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
-	"github.com/prassaaa/itemly-backend/internal/delivery/http/dto"
 	"github.com/prassaaa/itemly-backend/internal/delivery/http/handler"
 	"github.com/prassaaa/itemly-backend/internal/delivery/http/middleware"
 	"github.com/prassaaa/itemly-backend/internal/model"
 	jwtutil "github.com/prassaaa/itemly-backend/pkg/jwt"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func NewRouter(authHandler *handler.AuthHandler, jwtService *jwtutil.JWTService) *gin.Engine {
+func NewRouter(authHandler *handler.AuthHandler, generalHandler *handler.GeneralHandler, jwtService *jwtutil.JWTService) *gin.Engine {
 	r := gin.Default()
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	v1 := r.Group("/api/v1")
 	{
-		v1.GET("/health", func(c *gin.Context) {
-			c.JSON(http.StatusOK, dto.MessageResponse{Message: "OK"})
-		})
+		v1.GET("/health", generalHandler.HealthCheck)
 
 		auth := v1.Group("/auth")
 		{
@@ -34,13 +33,7 @@ func NewRouter(authHandler *handler.AuthHandler, jwtService *jwtutil.JWTService)
 			admin := protected.Group("/admin")
 			admin.Use(middleware.RoleAuth(model.RoleAdmin))
 			{
-				admin.GET("/dashboard", func(c *gin.Context) {
-					username, _ := c.Get("username")
-					c.JSON(http.StatusOK, gin.H{
-						"message": "welcome to admin dashboard",
-						"user":    username,
-					})
-				})
+				admin.GET("/dashboard", generalHandler.AdminDashboard)
 			}
 		}
 	}

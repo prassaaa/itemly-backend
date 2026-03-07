@@ -22,6 +22,11 @@ type MessageResponse struct {
 	Message string `json:"message"`
 }
 
+type AdminDashboardResponse struct {
+	Message string `json:"message"`
+	User    string `json:"user"`
+}
+
 func ToUserResponse(user *model.User) UserResponse {
 	return UserResponse{
 		ID:       user.ID.String(),

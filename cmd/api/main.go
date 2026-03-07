@@ -10,7 +10,20 @@ import (
 	"github.com/prassaaa/itemly-backend/internal/repository"
 	"github.com/prassaaa/itemly-backend/internal/usecase"
 	jwtutil "github.com/prassaaa/itemly-backend/pkg/jwt"
+
+	_ "github.com/prassaaa/itemly-backend/docs"
 )
+
+// @title           Itemly API
+// @version         1.0
+// @description     Inventory management backend API
+// @host            localhost:8080
+// @BasePath        /
+
+// @securityDefinitions.apikey BearerAuth
+// @in                         header
+// @name                       Authorization
+// @description                Enter your bearer token in the format: Bearer {token}
 
 func main() {
 	cfg, err := config.LoadConfig()
@@ -28,8 +41,9 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService)
 	authHandler := handler.NewAuthHandler(authUsecase)
+	generalHandler := handler.NewGeneralHandler()
 
-	router := httpdelivery.NewRouter(authHandler, jwtService)
+	router := httpdelivery.NewRouter(authHandler, generalHandler, jwtService)
 
 	log.Printf("Server starting on port %s", cfg.AppPort)
 	if err := router.Run(":" + cfg.AppPort); err != nil {

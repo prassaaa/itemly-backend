@@ -18,6 +18,18 @@ func NewAuthHandler(authUsecase usecase.AuthUsecase) *AuthHandler {
 	return &AuthHandler{authUsecase: authUsecase}
 }
 
+// Register godoc
+// @Summary      Register a new user
+// @Description  Create a new user account with username, email, and password
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      dto.RegisterRequest  true  "Register request"
+// @Success      201   {object}  dto.AuthResponse
+// @Failure      400   {object}  dto.ErrorResponse
+// @Failure      409   {object}  dto.ErrorResponse
+// @Failure      500   {object}  dto.ErrorResponse
+// @Router       /api/v1/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -44,6 +56,18 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	})
 }
 
+// Login godoc
+// @Summary      Login user
+// @Description  Authenticate with email and password, returns JWT token
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      dto.LoginRequest  true  "Login request"
+// @Success      200   {object}  dto.AuthResponse
+// @Failure      400   {object}  dto.ErrorResponse
+// @Failure      401   {object}  dto.ErrorResponse
+// @Failure      500   {object}  dto.ErrorResponse
+// @Router       /api/v1/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -67,6 +91,17 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	})
 }
 
+// GetProfile godoc
+// @Summary      Get current user profile
+// @Description  Returns the profile of the authenticated user
+// @Tags         User
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  dto.UserResponse
+// @Failure      401  {object}  dto.ErrorResponse
+// @Failure      404  {object}  dto.ErrorResponse
+// @Failure      500  {object}  dto.ErrorResponse
+// @Router       /api/v1/profile [get]
 func (h *AuthHandler) GetProfile(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
