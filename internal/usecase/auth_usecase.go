@@ -33,10 +33,10 @@ type AuthUsecase interface {
 type authUsecase struct {
 	userRepo   repository.UserRepository
 	jwtService *jwtutil.JWTService
-	blacklist  *jwtutil.TokenBlacklist
+	blacklist  jwtutil.TokenBlacklist
 }
 
-func NewAuthUsecase(userRepo repository.UserRepository, jwtService *jwtutil.JWTService, blacklist *jwtutil.TokenBlacklist) AuthUsecase {
+func NewAuthUsecase(userRepo repository.UserRepository, jwtService *jwtutil.JWTService, blacklist jwtutil.TokenBlacklist) AuthUsecase {
 	return &authUsecase{
 		userRepo:   userRepo,
 		jwtService: jwtService,

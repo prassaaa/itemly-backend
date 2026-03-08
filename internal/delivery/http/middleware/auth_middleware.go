@@ -11,7 +11,7 @@ import (
 	jwtutil "github.com/prassaaa/itemly-backend/pkg/jwt"
 )
 
-func JWTAuth(jwtService *jwtutil.JWTService, blacklist *jwtutil.TokenBlacklist) gin.HandlerFunc {
+func JWTAuth(jwtService *jwtutil.JWTService, blacklist jwtutil.TokenBlacklist) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {

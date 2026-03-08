@@ -23,6 +23,9 @@ type Config struct {
 	RateLimitRPS        float64 `mapstructure:"RATE_LIMIT_RPS"`
 	RateLimitBurst      int     `mapstructure:"RATE_LIMIT_BURST"`
 	MaxBodySize         int64   `mapstructure:"MAX_BODY_SIZE"`
+	RedisAddr           string  `mapstructure:"REDIS_ADDR"`
+	RedisPassword       string  `mapstructure:"REDIS_PASSWORD"`
+	RedisDB             int     `mapstructure:"REDIS_DB"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -35,6 +38,9 @@ func LoadConfig() (*Config, error) {
 	viper.SetDefault("RATE_LIMIT_RPS", 1)
 	viper.SetDefault("RATE_LIMIT_BURST", 5)
 	viper.SetDefault("MAX_BODY_SIZE", 1048576)
+	viper.SetDefault("REDIS_ADDR", "localhost:6379")
+	viper.SetDefault("REDIS_PASSWORD", "")
+	viper.SetDefault("REDIS_DB", 0)
 
 	if err := viper.ReadInConfig(); err != nil {
 		return nil, fmt.Errorf("failed to read config: %w", err)

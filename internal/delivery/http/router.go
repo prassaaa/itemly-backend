@@ -21,8 +21,8 @@ func NewRouter(
 	adminHandler *handler.AdminHandler,
 	jwtService *jwtutil.JWTService,
 	permUsecase usecase.PermissionUsecase,
-	blacklist *jwtutil.TokenBlacklist,
-	rateLimiterStore *middleware.RateLimiterStore,
+	blacklist jwtutil.TokenBlacklist,
+	rateLimiter middleware.RateLimiter,
 	cfg *config.Config,
 ) *gin.Engine {
 	r := gin.New()
@@ -47,7 +47,7 @@ func NewRouter(
 		v1.GET("/health", generalHandler.HealthCheck)
 
 		auth := v1.Group("/auth")
-		auth.Use(middleware.RateLimit(rateLimiterStore))
+		auth.Use(middleware.RateLimit(rateLimiter))
 		{
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", authHandler.Login)

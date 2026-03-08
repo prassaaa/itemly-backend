@@ -49,6 +49,14 @@ func main() {
 		slog.Error("failed to connect to database", "error", err)
 		os.Exit(1)
 	}
+	slog.Info("database connected", "host", cfg.DBHost, "port", cfg.DBPort, "name", cfg.DBName)
+
+	rdb, err := database.NewRedisClient(cfg)
+	if err != nil {
+		slog.Error("failed to connect to Redis", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("redis connected", "addr", cfg.RedisAddr, "db", cfg.RedisDB)
 
 	// Register custom validators
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
@@ -56,14 +64,14 @@ func main() {
 	}
 
 	jwtService := jwtutil.NewJWTService(cfg.JWTSecret, cfg.JWTExpiryHrs, cfg.JWTRefreshExpiryHrs)
-	tokenBlacklist := jwtutil.NewTokenBlacklist()
-	rateLimiterStore := middleware.NewRateLimiterStore(cfg.RateLimitRPS, cfg.RateLimitBurst)
+	tokenBlacklist := jwtutil.NewRedisTokenBlacklist(rdb)
+	rateLimiter := middleware.NewRedisRateLimiter(rdb, int(cfg.RateLimitRPS), cfg.RateLimitBurst)
 
 	userRepo := repository.NewUserRepository(db)
 	permissionRepo := repository.NewPermissionRepository(db)
 	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService, tokenBlacklist)
 	adminUsecase := usecase.NewAdminUsecase(userRepo)
-	permissionUsecase := usecase.NewPermissionUsecase(permissionRepo)
+	permissionUsecase := usecase.NewRedisPermissionUsecase(permissionRepo, rdb)
 	authHandler := handler.NewAuthHandler(authUsecase)
 	generalHandler := handler.NewGeneralHandler()
 	adminHandler := handler.NewAdminHandler(adminUsecase)
@@ -77,8 +85,9 @@ func main() {
 		slog.Error("failed to load permissions into cache", "error", err)
 		os.Exit(1)
 	}
+	slog.Info("permissions loaded into Redis cache")
 
-	router := httpdelivery.NewRouter(authHandler, generalHandler, adminHandler, jwtService, permissionUsecase, tokenBlacklist, rateLimiterStore, cfg)
+	router := httpdelivery.NewRouter(authHandler, generalHandler, adminHandler, jwtService, permissionUsecase, tokenBlacklist, rateLimiter, cfg)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.AppPort,
@@ -102,7 +111,7 @@ func main() {
 
 	slog.Info("shutting down server...")
 
-	rateLimiterStore.Stop()
+	rateLimiter.Stop()
 	tokenBlacklist.Stop()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -114,6 +123,10 @@ func main() {
 
 	if err := sqlDB.Close(); err != nil {
 		slog.Error("failed to close database connection", "error", err)
+	}
+
+	if err := rdb.Close(); err != nil {
+		slog.Error("failed to close Redis connection", "error", err)
 	}
 
 	slog.Info("server exited")
