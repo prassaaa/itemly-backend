@@ -11,7 +11,9 @@ import (
 )
 
 func NewRouter(authHandler *handler.AuthHandler, generalHandler *handler.GeneralHandler, jwtService *jwtutil.JWTService) *gin.Engine {
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.Use(middleware.RequestLogger())
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

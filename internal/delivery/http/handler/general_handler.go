@@ -36,8 +36,9 @@ func (h *GeneralHandler) HealthCheck(c *gin.Context) {
 // @Router       /api/v1/admin/dashboard [get]
 func (h *GeneralHandler) AdminDashboard(c *gin.Context) {
 	username, _ := c.Get("username")
+	usernameStr, _ := username.(string)
 	c.JSON(http.StatusOK, dto.AdminDashboardResponse{
 		Message: "welcome to admin dashboard",
-		User:    username.(string),
+		User:    usernameStr,
 	})
 }

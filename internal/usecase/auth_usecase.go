@@ -2,8 +2,10 @@ package usecase
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/prassaaa/itemly-backend/internal/model"
 	"github.com/prassaaa/itemly-backend/internal/repository"
 	"github.com/prassaaa/itemly-backend/pkg/hash"
@@ -37,12 +39,8 @@ func NewAuthUsecase(userRepo repository.UserRepository, jwtService *jwtutil.JWTS
 }
 
 func (uc *authUsecase) Register(username, email, password string) (*model.User, string, error) {
-	if _, err := uc.userRepo.FindByEmail(email); err == nil {
-		return nil, "", ErrEmailAlreadyExists
-	}
-	if _, err := uc.userRepo.FindByUsername(username); err == nil {
-		return nil, "", ErrUsernameAlreadyExists
-	}
+	username = strings.TrimSpace(username)
+	email = strings.ToLower(strings.TrimSpace(email))
 
 	hashedPassword, err := hash.HashPassword(password)
 	if err != nil {
@@ -57,6 +55,20 @@ func (uc *authUsecase) Register(username, email, password string) (*model.User, 
 	}
 
 	if err := uc.userRepo.Create(user); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			switch pgErr.ConstraintName {
+			case "uni_users_email", "idx_users_email":
+				return nil, "", ErrEmailAlreadyExists
+			case "uni_users_username", "idx_users_username":
+				return nil, "", ErrUsernameAlreadyExists
+			default:
+				if strings.Contains(pgErr.ConstraintName, "email") {
+					return nil, "", ErrEmailAlreadyExists
+				}
+				return nil, "", ErrUsernameAlreadyExists
+			}
+		}
 		return nil, "", err
 	}
 
@@ -69,6 +81,8 @@ func (uc *authUsecase) Register(username, email, password string) (*model.User, 
 }
 
 func (uc *authUsecase) Login(email, password string) (*model.User, string, error) {
+	email = strings.ToLower(strings.TrimSpace(email))
+
 	user, err := uc.userRepo.FindByEmail(email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

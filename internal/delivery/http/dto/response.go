@@ -18,6 +18,11 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
+type ValidationErrorResponse struct {
+	Error  string            `json:"error"`
+	Fields map[string]string `json:"fields"`
+}
+
 type MessageResponse struct {
 	Message string `json:"message"`
 }

@@ -1,7 +1,13 @@
 package main
 
 import (
-	"log"
+	"context"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/prassaaa/itemly-backend/config"
 	"github.com/prassaaa/itemly-backend/database"
@@ -26,14 +32,18 @@ import (
 // @description                Enter your bearer token in the format: Bearer {token}
 
 func main() {
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		slog.Error("failed to load config", "error", err)
+		os.Exit(1)
 	}
 
-	db, err := database.NewPostgresDB(cfg)
+	db, sqlDB, err := database.NewPostgresDB(cfg)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		slog.Error("failed to connect to database", "error", err)
+		os.Exit(1)
 	}
 
 	jwtService := jwtutil.NewJWTService(cfg.JWTSecret, cfg.JWTExpiryHrs)
@@ -45,8 +55,35 @@ func main() {
 
 	router := httpdelivery.NewRouter(authHandler, generalHandler, jwtService)
 
-	log.Printf("Server starting on port %s", cfg.AppPort)
-	if err := router.Run(":" + cfg.AppPort); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	srv := &http.Server{
+		Addr:    ":" + cfg.AppPort,
+		Handler: router,
 	}
+
+	go func() {
+		slog.Info("server starting", "port", cfg.AppPort)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error("server listen error", "error", err)
+			os.Exit(1)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	slog.Info("shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		slog.Error("server forced to shutdown", "error", err)
+	}
+
+	if err := sqlDB.Close(); err != nil {
+		slog.Error("failed to close database connection", "error", err)
+	}
+
+	slog.Info("server exited")
 }

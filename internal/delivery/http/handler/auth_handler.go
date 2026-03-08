@@ -2,9 +2,11 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/prassaaa/itemly-backend/internal/delivery/http/dto"
 	"github.com/prassaaa/itemly-backend/internal/usecase"
@@ -18,6 +20,29 @@ func NewAuthHandler(authUsecase usecase.AuthUsecase) *AuthHandler {
 	return &AuthHandler{authUsecase: authUsecase}
 }
 
+func formatValidationErrors(err error) map[string]string {
+	fields := make(map[string]string)
+	var ve validator.ValidationErrors
+	if errors.As(err, &ve) {
+		for _, fe := range ve {
+			field := fe.Field()
+			switch fe.Tag() {
+			case "required":
+				fields[field] = fmt.Sprintf("%s is required", field)
+			case "email":
+				fields[field] = fmt.Sprintf("%s must be a valid email address", field)
+			case "min":
+				fields[field] = fmt.Sprintf("%s must be at least %s characters", field, fe.Param())
+			case "max":
+				fields[field] = fmt.Sprintf("%s must be at most %s characters", field, fe.Param())
+			default:
+				fields[field] = fmt.Sprintf("%s is invalid", field)
+			}
+		}
+	}
+	return fields
+}
+
 // Register godoc
 // @Summary      Register a new user
 // @Description  Create a new user account with username, email, and password
@@ -26,13 +51,20 @@ func NewAuthHandler(authUsecase usecase.AuthUsecase) *AuthHandler {
 // @Produce      json
 // @Param        body  body      dto.RegisterRequest  true  "Register request"
 // @Success      201   {object}  dto.AuthResponse
-// @Failure      400   {object}  dto.ErrorResponse
+// @Failure      400   {object}  dto.ValidationErrorResponse
 // @Failure      409   {object}  dto.ErrorResponse
 // @Failure      500   {object}  dto.ErrorResponse
 // @Router       /api/v1/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		if fields := formatValidationErrors(err); len(fields) > 0 {
+			c.JSON(http.StatusBadRequest, dto.ValidationErrorResponse{
+				Error:  "validation failed",
+				Fields: fields,
+			})
+			return
+		}
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -64,13 +96,20 @@ func (h *AuthHandler) Register(c *gin.Context) {
 // @Produce      json
 // @Param        body  body      dto.LoginRequest  true  "Login request"
 // @Success      200   {object}  dto.AuthResponse
-// @Failure      400   {object}  dto.ErrorResponse
+// @Failure      400   {object}  dto.ValidationErrorResponse
 // @Failure      401   {object}  dto.ErrorResponse
 // @Failure      500   {object}  dto.ErrorResponse
 // @Router       /api/v1/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		if fields := formatValidationErrors(err); len(fields) > 0 {
+			c.JSON(http.StatusBadRequest, dto.ValidationErrorResponse{
+				Error:  "validation failed",
+				Fields: fields,
+			})
+			return
+		}
 		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: err.Error()})
 		return
 	}
