@@ -1,4 +1,4 @@
-.PHONY: test test-verbose test-cover test-cover-html k6-auth k6-ratelimit k6
+.PHONY: test test-verbose test-cover test-cover-html k6-auth k6-ratelimit k6 k6-cleanup
 
 test:
 	go test ./... -count=1
@@ -21,3 +21,6 @@ k6-ratelimit:
 	k6 run k6/ratelimit.js
 
 k6: k6-auth k6-ratelimit
+
+k6-cleanup:
+	go run cmd/cleanup/main.go
