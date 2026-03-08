@@ -49,13 +49,25 @@ func main() {
 	jwtService := jwtutil.NewJWTService(cfg.JWTSecret, cfg.JWTExpiryHrs)
 
 	userRepo := repository.NewUserRepository(db)
+	permissionRepo := repository.NewPermissionRepository(db)
 	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService)
 	adminUsecase := usecase.NewAdminUsecase(userRepo)
+	permissionUsecase := usecase.NewPermissionUsecase(permissionRepo)
 	authHandler := handler.NewAuthHandler(authUsecase)
 	generalHandler := handler.NewGeneralHandler()
 	adminHandler := handler.NewAdminHandler(adminUsecase)
 
-	router := httpdelivery.NewRouter(authHandler, generalHandler, adminHandler, jwtService)
+	if err := database.SeedPermissions(db); err != nil {
+		slog.Error("failed to seed permissions", "error", err)
+		os.Exit(1)
+	}
+
+	if err := permissionUsecase.LoadPermissions(); err != nil {
+		slog.Error("failed to load permissions into cache", "error", err)
+		os.Exit(1)
+	}
+
+	router := httpdelivery.NewRouter(authHandler, generalHandler, adminHandler, jwtService, permissionUsecase)
 
 	srv := &http.Server{
 		Addr:    ":" + cfg.AppPort,
