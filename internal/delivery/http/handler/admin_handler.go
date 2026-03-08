@@ -20,7 +20,7 @@ func NewAdminHandler(adminUsecase usecase.AdminUsecase) *AdminHandler {
 
 // AdminDashboard godoc
 // @Summary      Admin dashboard
-// @Description  Returns admin dashboard info (admin only)
+// @Description  Returns dashboard info. Requires permission: dashboard:view (all roles).
 // @Tags         Admin
 // @Produce      json
 // @Security     BearerAuth
@@ -39,7 +39,7 @@ func (h *AdminHandler) AdminDashboard(c *gin.Context) {
 
 // AssignRole godoc
 // @Summary      Assign role to user
-// @Description  Update a user's role (admin only)
+// @Description  Update a user's role. Requires permission: users:manage (admin only).
 // @Tags         Admin
 // @Accept       json
 // @Produce      json
