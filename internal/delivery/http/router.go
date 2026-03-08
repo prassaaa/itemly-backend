@@ -32,12 +32,8 @@ func NewRouter(authHandler *handler.AuthHandler, generalHandler *handler.General
 		protected.Use(middleware.JWTAuth(jwtService))
 		{
 			protected.GET("/profile", authHandler.GetProfile)
-
-			admin := protected.Group("/admin")
-			{
-				admin.GET("/dashboard", middleware.PermissionAuth(permUsecase, model.PermDashboardView), adminHandler.AdminDashboard)
-				admin.PUT("/users/:id/role", middleware.PermissionAuth(permUsecase, model.PermUsersManage), adminHandler.AssignRole)
-			}
+			protected.GET("/dashboard", middleware.PermissionAuth(permUsecase, model.PermDashboardView), adminHandler.AdminDashboard)
+			protected.PUT("/users/:id/role", middleware.PermissionAuth(permUsecase, model.PermUsersManage), adminHandler.AssignRole)
 		}
 	}
 

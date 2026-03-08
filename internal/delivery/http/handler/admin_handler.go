@@ -19,15 +19,15 @@ func NewAdminHandler(adminUsecase usecase.AdminUsecase) *AdminHandler {
 }
 
 // AdminDashboard godoc
-// @Summary      Admin dashboard
+// @Summary      Dashboard
 // @Description  Returns dashboard info. Requires permission: dashboard:view (all roles).
-// @Tags         Admin
+// @Tags         Dashboard
 // @Produce      json
 // @Security     BearerAuth
 // @Success      200  {object}  dto.AdminDashboardResponse
 // @Failure      401  {object}  dto.ErrorResponse
 // @Failure      403  {object}  dto.ErrorResponse
-// @Router       /api/v1/admin/dashboard [get]
+// @Router       /api/v1/dashboard [get]
 func (h *AdminHandler) AdminDashboard(c *gin.Context) {
 	username, _ := c.Get("username")
 	usernameStr, _ := username.(string)
@@ -40,7 +40,7 @@ func (h *AdminHandler) AdminDashboard(c *gin.Context) {
 // AssignRole godoc
 // @Summary      Assign role to user
 // @Description  Update a user's role. Requires permission: users:manage (admin only).
-// @Tags         Admin
+// @Tags         User Management
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
@@ -52,7 +52,7 @@ func (h *AdminHandler) AdminDashboard(c *gin.Context) {
 // @Failure      403   {object}  dto.ErrorResponse
 // @Failure      404   {object}  dto.ErrorResponse
 // @Failure      500   {object}  dto.ErrorResponse
-// @Router       /api/v1/admin/users/{id}/role [put]
+// @Router       /api/v1/users/{id}/role [put]
 func (h *AdminHandler) AssignRole(c *gin.Context) {
 	targetID, err := uuid.Parse(c.Param("id"))
 	if err != nil {

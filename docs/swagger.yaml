@@ -98,80 +98,6 @@ info:
   title: Itemly API
   version: "1.0"
 paths:
-  /api/v1/admin/dashboard:
-    get:
-      description: 'Returns dashboard info. Requires permission: dashboard:view (all
-        roles).'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.AdminDashboardResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Admin dashboard
-      tags:
-      - Admin
-  /api/v1/admin/users/{id}/role:
-    put:
-      consumes:
-      - application/json
-      description: 'Update a user''s role. Requires permission: users:manage (admin
-        only).'
-      parameters:
-      - description: User ID (UUID)
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Role assignment request
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/dto.AssignRoleRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.UserResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Assign role to user
-      tags:
-      - Admin
   /api/v1/auth/login:
     post:
       consumes:
@@ -240,6 +166,30 @@ paths:
       summary: Register a new user
       tags:
       - Auth
+  /api/v1/dashboard:
+    get:
+      description: 'Returns dashboard info. Requires permission: dashboard:view (all
+        roles).'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AdminDashboardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Dashboard
+      tags:
+      - Dashboard
   /api/v1/health:
     get:
       description: Returns OK if the service is running
@@ -280,6 +230,56 @@ paths:
       summary: Get current user profile
       tags:
       - User
+  /api/v1/users/{id}/role:
+    put:
+      consumes:
+      - application/json
+      description: 'Update a user''s role. Requires permission: users:manage (admin
+        only).'
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Role assignment request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AssignRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Assign role to user
+      tags:
+      - User Management
 securityDefinitions:
   BearerAuth:
     description: 'Enter your bearer token in the format: Bearer {token}'
