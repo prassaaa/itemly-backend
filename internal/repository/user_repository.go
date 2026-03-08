@@ -11,6 +11,7 @@ type UserRepository interface {
 	FindByEmail(email string) (*model.User, error)
 	FindByUsername(username string) (*model.User, error)
 	FindByID(id uuid.UUID) (*model.User, error)
+	UpdateRole(id uuid.UUID, role model.Role) error
 }
 
 type userRepository struct {
@@ -47,4 +48,8 @@ func (r *userRepository) FindByID(id uuid.UUID) (*model.User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (r *userRepository) UpdateRole(id uuid.UUID, role model.Role) error {
+	return r.db.Model(&model.User{}).Where("id = ?", id).Update("role", role).Error
 }

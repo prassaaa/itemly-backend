@@ -50,10 +50,12 @@ func main() {
 
 	userRepo := repository.NewUserRepository(db)
 	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService)
+	adminUsecase := usecase.NewAdminUsecase(userRepo)
 	authHandler := handler.NewAuthHandler(authUsecase)
 	generalHandler := handler.NewGeneralHandler()
+	adminHandler := handler.NewAdminHandler(adminUsecase)
 
-	router := httpdelivery.NewRouter(authHandler, generalHandler, jwtService)
+	router := httpdelivery.NewRouter(authHandler, generalHandler, adminHandler, jwtService)
 
 	srv := &http.Server{
 		Addr:    ":" + cfg.AppPort,

@@ -5,12 +5,13 @@ import (
 	"github.com/prassaaa/itemly-backend/internal/delivery/http/handler"
 	"github.com/prassaaa/itemly-backend/internal/delivery/http/middleware"
 	"github.com/prassaaa/itemly-backend/internal/model"
+	"github.com/prassaaa/itemly-backend/internal/usecase"
 	jwtutil "github.com/prassaaa/itemly-backend/pkg/jwt"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func NewRouter(authHandler *handler.AuthHandler, generalHandler *handler.GeneralHandler, jwtService *jwtutil.JWTService) *gin.Engine {
+func NewRouter(authHandler *handler.AuthHandler, generalHandler *handler.GeneralHandler, adminHandler *handler.AdminHandler, jwtService *jwtutil.JWTService, permUsecase usecase.PermissionUsecase) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.RequestLogger())
@@ -33,9 +34,9 @@ func NewRouter(authHandler *handler.AuthHandler, generalHandler *handler.General
 			protected.GET("/profile", authHandler.GetProfile)
 
 			admin := protected.Group("/admin")
-			admin.Use(middleware.RoleAuth(model.RoleAdmin))
 			{
-				admin.GET("/dashboard", generalHandler.AdminDashboard)
+				admin.GET("/dashboard", middleware.PermissionAuth(permUsecase, model.PermDashboardView), adminHandler.AdminDashboard)
+				admin.PUT("/users/:id/role", middleware.PermissionAuth(permUsecase, model.PermUsersManage), adminHandler.AssignRole)
 			}
 		}
 	}
