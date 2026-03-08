@@ -30,7 +30,3 @@ func (rl *redisRateLimiter) Allow(ip string) bool {
 	}
 	return res.Allowed > 0
 }
-
-func (rl *redisRateLimiter) Stop() {
-	// no-op: Redis client lifecycle managed in main.go
-}

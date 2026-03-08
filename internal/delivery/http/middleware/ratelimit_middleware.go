@@ -9,7 +9,6 @@ import (
 
 type RateLimiter interface {
 	Allow(ip string) bool
-	Stop()
 }
 
 func RateLimit(limiter RateLimiter) gin.HandlerFunc {

@@ -111,9 +111,6 @@ func main() {
 
 	slog.Info("shutting down server...")
 
-	rateLimiter.Stop()
-	tokenBlacklist.Stop()
-
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

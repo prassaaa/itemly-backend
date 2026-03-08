@@ -36,7 +36,3 @@ func (bl *redisTokenBlacklist) IsBlacklisted(jti string) bool {
 	}
 	return n > 0
 }
-
-func (bl *redisTokenBlacklist) Stop() {
-	// no-op: Redis client lifecycle managed in main.go
-}
