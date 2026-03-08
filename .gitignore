@@ -12,6 +12,10 @@ vendor/
 
 # Environment
 .env
+CLAUDE.local.md
+
+# Claude Code (local only)
+.claude/settings.local.json
 
 # IDE
 .idea/

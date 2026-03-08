@@ -1,0 +1,11 @@
+---
+paths:
+  - "internal/delivery/http/middleware/**/*.go"
+  - "pkg/jwt/**/*.go"
+---
+- JWT middleware set context keys: `userID` (uuid.UUID), `username` (string), `role` (string), `jti` (string), `tokenExpiresAt` (time.Time)
+- Token blacklist pakai Redis dengan key `blacklist:<jti>` dan TTL = sisa lifetime token
+- Rate limiter pakai Redis via `go-redis/redis_rate`, key `ratelimit:<ip>`
+- Rate limiter fail open (return true) kalau Redis error
+- Token blacklist fail open (return false) kalau Redis error
+- Permission cache di Redis hash: key `perm:<role>`, field = permission name

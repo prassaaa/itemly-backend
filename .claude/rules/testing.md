@@ -1,0 +1,14 @@
+---
+paths:
+  - "**/*_test.go"
+  - "internal/testutil/**"
+  - "k6/**"
+---
+- Gunakan `testify` (assert/require), bukan manual if-check
+- Mock dibuat hand-written dengan function pointer fields, colocated di `_test.go` yang sama
+- Nil function pointer = panic = unexpected call detector gratis
+- Untuk JWT test, pakai helper dari `internal/testutil/jwt.go`
+- Redis test pakai `miniredis.RunT(t)`, bukan Redis server beneran
+- Gin test pakai `gin.SetMode(gin.TestMode)` di `init()`
+- Selalu test happy path + error paths (sentinel errors, repo errors, validation errors)
+- k6 scripts pakai `retryPost()` untuk handle rate limiter 429
