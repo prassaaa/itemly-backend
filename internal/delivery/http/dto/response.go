@@ -3,8 +3,9 @@ package dto
 import "github.com/prassaaa/itemly-backend/internal/model"
 
 type AuthResponse struct {
-	Token string       `json:"token"`
-	User  UserResponse `json:"user"`
+	AccessToken  string       `json:"access_token"`
+	RefreshToken string       `json:"refresh_token"`
+	User         UserResponse `json:"user"`
 }
 
 type UserResponse struct {

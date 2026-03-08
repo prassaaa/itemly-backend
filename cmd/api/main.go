@@ -9,13 +9,17 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	"github.com/prassaaa/itemly-backend/config"
 	"github.com/prassaaa/itemly-backend/database"
 	httpdelivery "github.com/prassaaa/itemly-backend/internal/delivery/http"
 	"github.com/prassaaa/itemly-backend/internal/delivery/http/handler"
+	"github.com/prassaaa/itemly-backend/internal/delivery/http/middleware"
 	"github.com/prassaaa/itemly-backend/internal/repository"
 	"github.com/prassaaa/itemly-backend/internal/usecase"
 	jwtutil "github.com/prassaaa/itemly-backend/pkg/jwt"
+	pwdvalidator "github.com/prassaaa/itemly-backend/pkg/validator"
 
 	_ "github.com/prassaaa/itemly-backend/docs"
 )
@@ -46,11 +50,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	jwtService := jwtutil.NewJWTService(cfg.JWTSecret, cfg.JWTExpiryHrs)
+	// Register custom validators
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		_ = v.RegisterValidation("password", pwdvalidator.PasswordStrength)
+	}
+
+	jwtService := jwtutil.NewJWTService(cfg.JWTSecret, cfg.JWTExpiryHrs, cfg.JWTRefreshExpiryHrs)
+	tokenBlacklist := jwtutil.NewTokenBlacklist()
+	rateLimiterStore := middleware.NewRateLimiterStore(cfg.RateLimitRPS, cfg.RateLimitBurst)
 
 	userRepo := repository.NewUserRepository(db)
 	permissionRepo := repository.NewPermissionRepository(db)
-	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService)
+	authUsecase := usecase.NewAuthUsecase(userRepo, jwtService, tokenBlacklist)
 	adminUsecase := usecase.NewAdminUsecase(userRepo)
 	permissionUsecase := usecase.NewPermissionUsecase(permissionRepo)
 	authHandler := handler.NewAuthHandler(authUsecase)
@@ -67,11 +78,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	router := httpdelivery.NewRouter(authHandler, generalHandler, adminHandler, jwtService, permissionUsecase)
+	router := httpdelivery.NewRouter(authHandler, generalHandler, adminHandler, jwtService, permissionUsecase, tokenBlacklist, rateLimiterStore, cfg)
 
 	srv := &http.Server{
-		Addr:    ":" + cfg.AppPort,
-		Handler: router,
+		Addr:         ":" + cfg.AppPort,
+		Handler:      router,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
 
 	go func() {
@@ -87,6 +101,9 @@ func main() {
 	<-quit
 
 	slog.Info("shutting down server...")
+
+	rateLimiterStore.Stop()
+	tokenBlacklist.Stop()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

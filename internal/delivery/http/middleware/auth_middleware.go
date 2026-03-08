@@ -11,7 +11,7 @@ import (
 	jwtutil "github.com/prassaaa/itemly-backend/pkg/jwt"
 )
 
-func JWTAuth(jwtService *jwtutil.JWTService) gin.HandlerFunc {
+func JWTAuth(jwtService *jwtutil.JWTService, blacklist *jwtutil.TokenBlacklist) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -31,9 +31,21 @@ func JWTAuth(jwtService *jwtutil.JWTService) gin.HandlerFunc {
 			return
 		}
 
+		if claims.TokenType != jwtutil.AccessToken {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "invalid token type"})
+			return
+		}
+
+		if blacklist.IsBlacklisted(claims.ID) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "token has been revoked"})
+			return
+		}
+
 		c.Set("userID", claims.UserID)
 		c.Set("username", claims.Username)
 		c.Set("role", claims.Role)
+		c.Set("jti", claims.ID)
+		c.Set("tokenExpiresAt", claims.ExpiresAt.Time)
 		c.Next()
 	}
 }
